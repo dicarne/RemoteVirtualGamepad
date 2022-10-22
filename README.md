@@ -22,5 +22,7 @@ Maybe we can improve the frequency of transmission, add timestamps to discard ob
 
 ## Thanks
 XInput .net binding: https://github.com/amerkoleci/Vortice.Windows
+
 Virtual gamepad: https://github.com/ViGEm/ViGEm.NET
+
 Network lib: https://github.com/landriesnidis/STTech.BytesIO

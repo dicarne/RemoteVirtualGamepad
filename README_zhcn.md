@@ -21,5 +21,7 @@
 
 ## 感谢
 XInput .net 绑定: https://github.com/amerkoleci/Vortice.Windows
+
 虚拟手柄: https://github.com/ViGEm/ViGEm.NET
+
 网络库: https://github.com/landriesnidis/STTech.BytesIO
