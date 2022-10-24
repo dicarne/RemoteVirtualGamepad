@@ -11,7 +11,7 @@ Currently most remote desktops do not support gamepads, and the remote software 
 2. Make sure the two computers are on a LAN or virtual LAN (e.g. n2n, zerotier) and know the IP.
 3. Download the executable program and put it in both computers.
 4. On the computer without a gamepad, run `RemoteVirtualGamepad.exe` directly.
-5. On the computer with the gamepad, run it from the command line or add command line parameters, such as `RemoteVirtualGamepad.exe client 192.168.100.200`, where `192.168.100.200` is replaced by the IP of the computer without the gamepad.
+5. On the computer with the gamepad, run it from the command line or add command line parameters, such as `RemoteVirtualGamepad.exe gamepad 192.168.100.200`, where `192.168.100.200` is replaced by the IP of the computer without the gamepad.
 6. Run it! If nothing happens, the command line of the computer without the gamepad will show the connection information; the command line on the computer with the gamepad will show `Connected: true`. If it fails, there will be an error message.
 
 ## TCP
