@@ -1,30 +1,55 @@
-﻿using STTech.BytesIO.Tcp;
+﻿using STTech.BytesIO.Core;
+using System.Net;
 using Vortice.XInput;
+using TcpClient = STTech.BytesIO.Tcp.TcpClient;
+using UdpClient = System.Net.Sockets.UdpClient;
 
 namespace ConsoleInput;
 public class Controller
 {
     public int userIndex { get; set; } = 0;
     public bool ok { get; set; } = false;
-    public bool connectd { get; set; } = false;
-    TcpClient client { get; set; }
-    public Controller(string ip)
+    public bool connected { get; set; } = false;
+    bool UseTCP { get; set; } = true;
+    BytesClient? tcpClient { get; set; }
+    UdpClient? udpClient { get; set; }
+    public Controller(string ip, bool useTcp)
     {
-        client = new TcpClient();
-        client.Port = 54391;
-        client.Host = ip;
-        client.OnDataReceived += Client_OnDataReceived;
-        client.OnConnectedSuccessfully += Client_OnConnectedSuccessfully;
-        client.OnDisconnected += Client_OnDisconnected;
+        UseTCP = useTcp;
+        if (UseTCP)
+        {
+            var iclient = new TcpClient();
+            iclient.Port = Sync.Port;
+            iclient.Host = ip;
+            iclient.OnDataReceived += Client_OnDataReceived;
+            iclient.OnConnectedSuccessfully += Client_OnConnectedSuccessfully;
+            iclient.OnDisconnected += Client_OnDisconnected;
+            tcpClient = iclient;
+        }
+        else
+        {
+            IPAddress locateIp = IPAddress.Parse(ip);
+            udpRemoteIp = new IPEndPoint(locateIp, Sync.Port);
+            udpClient = new UdpClient(Sync.Port);
+            connected = true;
+        }
     }
+    IPEndPoint? udpRemoteIp { get; set; }
     void Connect()
     {
-        var res = client.Connect();
-        if (!res.IsSuccess)
+        if(UseTCP)
         {
-            Console.WriteLine(res.Exception.ToString());
-            Thread.Sleep(1000);
-            Connect();
+            var res = tcpClient!.Connect();
+            if (!res.IsSuccess)
+            {
+                Console.WriteLine(res.Exception.ToString());
+                Thread.Sleep(100);
+                Connect();
+            }
+            else
+            {
+                connected = true;
+            }
         }
     }
     public void Run()
@@ -52,7 +77,7 @@ public class Controller
                 }
 
                 Console.SetCursorPosition(0, 0);
-                ClearLine(); Console.WriteLine($"Connected: {connectd}");
+                ClearLine(); Console.WriteLine($"Connected: {connected}");
                 ClearLine(); Console.WriteLine($"=========================================================================");
                 ClearLine(); Console.WriteLine($"Press 1-4 to select gamepad, triggers control rumble                     ");
                 ClearLine(); Console.WriteLine($"=========================================================================");
@@ -62,13 +87,21 @@ public class Controller
                 ClearLine(); Console.WriteLine($"Left Trigger  : {state.Gamepad.LeftTrigger}");
                 ClearLine(); Console.WriteLine($"Right Thumb   : X = {state.Gamepad.RightThumbX} Y = {state.Gamepad.RightThumbY}");
                 ClearLine(); Console.WriteLine($"Right Trigger : {state.Gamepad.RightTrigger}");
-                if (connectd)
+                if (connected)
                 {
                     var binary = Sync.GetBytes(state.Gamepad);
-                    client.Send(binary);
+                    if (UseTCP)
+                    {
+                        tcpClient!.Send(binary);
+                    }
+                    else
+                    {
+                        udpClient!.Send(binary, binary.Length, udpRemoteIp);
+                    }
+
                 }
 
-                Thread.Sleep(10);
+                Thread.Sleep(20);
             }
             catch (Exception ex)
             {
@@ -80,7 +113,7 @@ public class Controller
 
     private void Client_OnDisconnected(object? sender, STTech.BytesIO.Core.DisconnectedEventArgs e)
     {
-        connectd = false;
+        connected = false;
         Thread.Sleep(100);
         Console.WriteLine("Reconnecting...");
         Connect();
@@ -88,7 +121,7 @@ public class Controller
 
     private void Client_OnConnectedSuccessfully(object? sender, STTech.BytesIO.Core.ConnectedSuccessfullyEventArgs e)
     {
-        connectd = true;
+        connected = true;
     }
 
     private void Client_OnDataReceived(object? sender, STTech.BytesIO.Core.DataReceivedEventArgs e)

@@ -3,6 +3,8 @@ using Nefarius.ViGEm.Client.Targets;
 using Vortice.XInput;
 using Nefarius.ViGEm.Client.Targets.Xbox360;
 using STTech.BytesIO.Tcp;
+using System.Net.Sockets;
+using System.Net;
 
 namespace ConsoleInput;
 public class HandleController
@@ -10,8 +12,10 @@ public class HandleController
     ViGEmClient client;
     IXbox360Controller control;
     Gamepad current;
-    public HandleController()
+    bool UseTCP { get; set; } = true;
+    public HandleController(bool useTCP)
     {
+        UseTCP = useTCP;
         client = new ViGEmClient();
         control = client.CreateXbox360Controller();
         control.Connect();
@@ -19,14 +23,28 @@ public class HandleController
     }
     public async Task Run()
     {
-        var server = new TcpServer();
-        server.Port = 54391;
-        server.Started += Server_Started;
-        server.Closed += Server_Closed;
-        server.ClientConnected += Server_ClientConnected;
-        server.ClientDisconnected += Server_ClientDisconnected;
-        await server.StartAsync();
+        if (UseTCP)
+        {
+            var server = new TcpServer();
+            server.Port = Sync.Port;
+            server.Started += Server_Started;
+            server.Closed += Server_Closed;
+            server.ClientConnected += Server_ClientConnected;
+            server.ClientDisconnected += Server_ClientDisconnected;
+            await server.StartAsync();
+        }
+        else
+        {
+            var server2 = new UdpClient(Sync.Port);
+            IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
+            while (true)
+            {
+                var receiveBytes = server2.Receive(ref RemoteIpEndPoint);
+                receiveData(receiveBytes);
+            }
+        }
     }
+
 
     void SyncGamePad()
     {
@@ -68,13 +86,19 @@ public class HandleController
 
     private void Client_OnDataReceived(object? sender, STTech.BytesIO.Core.DataReceivedEventArgs e)
     {
-        current = Sync.GetStruct<Gamepad>(e.Data);
+        
+        receiveData(e.Data);
+    }
+
+    void receiveData(byte[] data)
+    {
+        current = Sync.GetStruct<Gamepad>(data);
         SyncGamePad();
     }
 
     private void Server_Closed(object? sender, EventArgs e)
     {
-        
+
     }
 
     private void Server_Started(object? sender, EventArgs e)

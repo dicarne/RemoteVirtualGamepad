@@ -21,4 +21,6 @@ public class Sync
         handle.Free();
         return str;
     }
+
+    public static int Port { get; set; } = 54391;
 }

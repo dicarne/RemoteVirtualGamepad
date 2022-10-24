@@ -1,24 +1,29 @@
-﻿
-using ConsoleInput;
-var client = false;
-var ip = "";
+﻿using ConsoleInput;
+using System.CommandLine;
 
-if(args.Length >= 2 && args[0] == "client")
+var tcpOption = new Option<bool>(
+        name: "--tcp",
+        description: "use tcp instead of udp.",
+        getDefaultValue: () => false
+    );
+var gamepadCmd = new Command("gamepad", "I have a gamepad!");
+var hostArg = new Argument<string>("target_ip", "IP of your friends.");
+gamepadCmd.Add(hostArg);
+gamepadCmd.SetHandler((hostArgV, useTcp) =>
 {
-    client = true;
-    ip = args[1];
-}
-
-if (client)
-{
-    var master = new Controller(ip);
+    Console.WriteLine($"Host: {hostArgV}");
+    Console.WriteLine($"Tcp: {useTcp}");
+    var master = new Controller(hostArgV, useTcp);
     master.Run();
-}
-else
+
+}, hostArg, tcpOption);
+var commands = new RootCommand();
+commands.Add(gamepadCmd);
+commands.AddGlobalOption(tcpOption);
+commands.SetHandler(async (useTcp) =>
 {
-    var handle = new HandleController();
+    Console.WriteLine($"Tcp: {useTcp}");
+    var handle = new HandleController(useTcp);
     await handle.Run();
-}
-
-
-
+}, tcpOption);
+return await commands.InvokeAsync(args);

@@ -11,6 +11,8 @@
   <ItemGroup>
     <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.230" />
     <PackageReference Include="STTech.BytesIO.Tcp" Version="2.12.1-beta1017" />
+    <PackageReference Include="STTech.BytesIO.Udp" Version="2.12.1-beta1017" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="Vortice.XInput" Version="2.1.34-beta" />
   </ItemGroup>
 
